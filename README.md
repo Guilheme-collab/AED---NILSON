@@ -138,3 +138,7 @@ O script atualiza `dados/resumo_ensaios.csv` e gera graficos de resposta tempora
 ## Como citar a contribuicao no artigo
 
 Descrever como **co-simulacao de firmware Arduino Uno e planta RC no Proteus, com atraso de realimentacao implementado por buffer circular em software**. Informar ganhos e configuracoes reais. Nao chamar de HIL fisico nem de atraso de rede fisica sem uma implementacao e evidencia adicionais.
+
+## Repositorio GitHub
+
+Repositorio remoto: https://github.com/Guilheme-collab/AED---NILSON (branch `main`). Para enviar todos os arquivos do pacote local, inclusive evidencias, CSVs, HEX, DOCX e scripts, siga `docs/COMO_SUBIR_GITHUB.md`. O repositorio remoto ja possui um commit inicial: clone-o antes de copiar os arquivos completos e fazer o push; nao rode `git init` novamente.
