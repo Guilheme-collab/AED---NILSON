@@ -1,0 +1,10 @@
+* text=auto
+*.ino text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.csv text eol=lf
+*.hex text eol=lf
+*.pdf binary
+*.docx binary
+*.png binary
+*.pdsprj binary
