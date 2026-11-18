@@ -1,0 +1,13 @@
+# Arduino/Proteus temporary and generated files
+*.bak
+*.tmp
+*.log
+*.hex.tmp
+*.elf
+*.o
+.DS_Store
+Thumbs.db
+__pycache__/
+.venv/
+venv/
+.pytest_cache/
