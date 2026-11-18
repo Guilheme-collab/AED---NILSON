@@ -1,0 +1,4 @@
+ordem_pade,erro_magnitude_max_abs,erro_fase_circular_max_abs_graus,erro_fase_circular_rms_graus,metrica_fase,faixa_omega_rad_s
+1,1.11022302e-15,179.91130974,56.50955325,"abs(angle(H_pade * conj(H_exato))) em graus, intervalo [-180,180]",0.01 a 100
+3,8.88178420e-16,179.20168732,45.39307998,"abs(angle(H_pade * conj(H_exato))) em graus, intervalo [-180,180]",0.01 a 100
+5,8.88178420e-16,179.48934679,38.49499683,"abs(angle(H_pade * conj(H_exato))) em graus, intervalo [-180,180]",0.01 a 100

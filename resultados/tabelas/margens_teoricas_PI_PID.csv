@@ -1,0 +1,3 @@
+controlador,planta,modelo_controlador,Kp,Ki,Kd,frequencia_cruzamento_ganho_rad_s,margem_fase_graus,margem_ganho_dB,margem_atraso_teorica_ms,natureza
+PI,G(s)=1/(0.47s+1),PI: 1.4 + 1/s,1.4,1.0,0.0,2.283434401,115.607168591,SEM_CRUZAMENTO_DE_FASE_FINITO,883.636390,Previsao teorica continua; nao e medicao Proteus
+PID_filtrado,G(s)=1/(0.47s+1),PID filtrado: 1.4 + 1/s + 0.08s/(0.05s+1),1.4,1.0,0.08,2.221707156,122.815311404,SEM_CRUZAMENTO_DE_FASE_FINITO,964.812824,Previsao teorica continua; nao e medicao Proteus

@@ -1,0 +1,40 @@
+AUDITORIA FINAL — ENGENHARIA DA COMPUTACAO (ENTREGA SIMULADA)
+Data: 2026-11-18
+
+ESCOPO
+Aplicacao pratica inteiramente simulada. Proteus/firmware/dados sao artefatos da simulacao fornecida pelo grupo. Nenhuma montagem ou medicao fisica e alegada.
+
+COMANDOS EXECUTADOS NESTA REVISAO
+1) PYTHONPATH=src python -m pytest -q
+   Resultado: 55 passed.
+2) python scripts/gerar_resultados.py
+   Resultado: codigo 0; 4 benchmarks, 4 validacoes cruzadas, 2 modelos de margem,
+   10 series de telemetria (9534 amostras completas), escalabilidade n=5,10,20.
+3) python scripts/plotar_telemetria.py
+   Resultado: codigo 0.
+4) python scripts/validar_entrega.py
+   Resultado: codigo 0; 10 CSVs/9534 amostras completas; Intel HEX com 339 registros,
+   338 registros de dados, EOF unico e checksums validos; estrutura Proteus inspecionada.
+
+CORRECOES NESTA REVISAO
+- Nyquist agora usa semiarcos de indentacao no semiplano direito para polos no eixo jω.
+- A analise informa separadamente open_loop_imaginary_axis_poles.
+- Testes de polo integrador e par de polos imaginarios adicionados.
+- Erro de fase Pade atualizado para metrica angular circular:
+  angle(H_pade * conj(H_exato)), em graus, intervalo [-180,180].
+- Tabelas, figuras e documentacao regeneradas/atualizadas.
+
+LIMITES DA AUDITORIA
+- O simulador Proteus nao foi aberto/executado nesta auditoria; os artefatos e evidencias
+  fornecidos pelo grupo foram preservados e sua estrutura foi inspecionada.
+- Firmware nao foi recompilado a partir do fonte; HEX foi validado estruturalmente.
+- O artigo e rascunho Markdown; requer template oficial, autoria e revisao dos alunos.
+- O roteiro do seminario esta preparado; a apresentacao oral e do grupo.
+- Erro de recuperacao das raizes em n=20 ~0.1228 deve ser discutido.
+- A indentacao numerica requer convergencia de raio/discretizacao em aplicacoes criticas;
+  polos/zeros de malha fechada exatamente na fronteira exigem tratamento especifico.
+
+CONCLUSAO
+55 testes passaram e todos os geradores/validadores executados retornaram codigo 0.
+Este log nao declara execucao do Proteus, recompilacao do firmware ou conclusao das
+atividades academicas que dependem dos autores.

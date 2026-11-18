@@ -1,0 +1,6 @@
+......................................................                   [100%]
+54 passed in 1.23s
+HEX: 339 registros (338 dados), EOF unico, checksums validos; SHA256=012e3c69eeb1a7937473d8698a624afba0e849e2b92872e17e9396a65db15ff8
+Proteus: container ZIP, membros e referencia relativa do HEX conferidos; sem execucao do simulador.
+CSV: 10 ensaios e 9534 amostras completas validadas.
+Auditoria estrutural e suíte de testes concluídas. Esta validação não compila Arduino nem executa Proteus.

@@ -1,0 +1,8 @@
+Reexecução em 18/11/2026
+pytest: 54 passed
+gerar_resultados.py: exit 0
+plotar_telemetria.py: exit 0
+validar_entrega.py: exit 0
+HEX: 339 records, 338 data, EOF único, checksums válidos
+Proteus: estrutura conferida; simulador não executado
+CSV: 10 ensaios; 9534 amostras completas

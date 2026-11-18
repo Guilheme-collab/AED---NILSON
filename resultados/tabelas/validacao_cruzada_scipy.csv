@@ -1,0 +1,5 @@
+sistema,comparacao_resposta_frequencia,erro_maximo_abs_resposta,comparacao_polos,erro_maximo_abs_polos,polos_RHP_Routh,polos_RHP_SciPy,validacao_Routh_vs_SciPy
+A,SciPy signal.freqresp + fator exp(-tau*jw) independente,7.473417e-17,scipy.linalg.eigvals(companion),0.000000e+00,0,0,CONCORDA
+B,SciPy signal.freqresp + fator exp(-tau*jw) independente,5.551115e-17,scipy.linalg.eigvals(companion),0.000000e+00,0,0,CONCORDA
+C,SciPy signal.freqresp + fator exp(-tau*jw) independente,0.000000e+00,scipy.linalg.eigvals(companion),0.000000e+00,0,0,CONCORDA
+D,SciPy signal.freqresp + fator exp(-tau*jw) independente,0.000000e+00,scipy.linalg.eigvals(companion); aproximacao Pade-3,0.000000e+00,0,0,CONCORDA_PARA_PADE3

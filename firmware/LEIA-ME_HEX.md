@@ -1,5 +1,14 @@
-# Sobre o arquivo HEX
+# Integridade do HEX PID
 
-`PID_Nyquist_Proteus_Arduino.hex` e o arquivo Intel HEX fornecido pelo usuario para esta entrega. Todos os registros e checksums foram validados estruturalmente.
+Arquivo recebido: `PID_Nyquist_Proteus_Arduino_PID.ino.hex`.
 
-Essa validacao confirma que o arquivo esta bem formado como Intel HEX, mas nao demonstra que foi compilado a partir do `PID_Nyquist_Proteus_Arduino.ino` que esta nesta pasta. Para garantir reproducibilidade, abra o INO no Arduino IDE, selecione Arduino Uno, compile/exporte o binario e compare/substitua o HEX. Mantenha fonte e binario correspondentes na mesma revisao Git.
+- Formato: Intel HEX.
+- Registros verificados: 339.
+- Registros de dados: 338.
+- Registro EOF tipo `01`: 1.
+- Checksum: válido em todos os registros (soma dos bytes do registro módulo 256 igual a zero).
+- SHA-256: `012e3c69eeb1a7937473d8698a624afba0e849e2b92872e17e9396a65db15ff8`.
+
+Essa validação prova integridade estrutural do arquivo Intel HEX, mas não que ele foi compilado exatamente a partir do `.ino` que está no repositório. O toolchain Arduino/AVR não estava disponível nesta execução para recompilar a fonte e comparar os binários.
+
+O projeto Proteus referencia este HEX pelo caminho relativo `../firmware/PID_Nyquist_Proteus_Arduino_PID.ino.hex`. Caso uma nova compilação seja feita, mantenha a fonte, o HEX e o hash da mesma revisão Git.

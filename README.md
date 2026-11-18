@@ -1,214 +1,169 @@
 # Análise Computacional e Comparativa de Critérios de Estabilidade em Sistemas Dinâmicos
 
-## Implementação prática — Engenharia da Computação
+**Entrega técnica — Engenharia da Computação (EC)**
 
-Este repositório reúne os arquivos da implementação prática desenvolvida para a trilha de **Engenharia da Computação** do projeto de pesquisa aplicada sobre análise de estabilidade pelo Critério de Nyquist.
+Este repositório reúne a implementação computacional de análise de estabilidade, os quatro sistemas de benchmark, validações com SciPy, experimentos de escalabilidade, os firmwares PI/PID, o projeto Proteus, os dez conjuntos de telemetria e evidências visuais da simulação.
 
-A etapa documentada consiste em um protótipo de controle de uma planta RC, com firmware executado em um Arduino Uno virtual no Proteus. O firmware lê o setpoint, mede a saída da planta, aplica um atraso configurável à realimentação por meio de um buffer circular e calcula a ação de controle PI. As execuções são registradas por comunicação serial para posterior análise.
+> **Escopo EC:** toda a aplicação é computacional e simulada. A demonstração da planta/controlador é feita no Proteus, com atraso variável inserido por software no histórico de medições. Descreva os resultados como simulação/co-simulação no Proteus; identifique-os sempre como resultados simulados.
 
-> **Escopo:** este repositório documenta a implementação e a co-simulação de firmware e circuito no Proteus. Ele não representa, por si só, uma montagem HIL física com microcontrolador real e planta externa. O atraso dos ensaios foi implementado por software sobre as amostras da medição.
+## Comece por aqui
 
-## Visão geral do protótipo
+1. Leia [`docs/GUIA_PARA_AUTOR_RELATORIO.md`](docs/GUIA_PARA_AUTOR_RELATORIO.md) para saber quais resultados e figuras usar na elaboração do artigo/relatório.
+2. Leia [`docs/RELATORIO_TECNICO_REPASSE.md`](docs/RELATORIO_TECNICO_REPASSE.md) para a arquitetura, modelos, resultados, limites e discrepâncias corrigidas.
+3. Consulte [`docs/MATRIZ_ATENDIMENTO_ENUNCIADO.md`](docs/MATRIZ_ATENDIMENTO_ENUNCIADO.md) para a matriz técnica original e [`docs/AUDITORIA_CONFORMIDADE_INTEGRAL.md`](docs/AUDITORIA_CONFORMIDADE_INTEGRAL.md) para a revisão integral do PDF.
+4. Use [`docs/ARTIGO_CIENTIFICO_RASCUNHO_SBC_IEEE.md`](docs/ARTIGO_CIENTIFICO_RASCUNHO_SBC_IEEE.md) como rascunho técnico e [`docs/ROTEIRO_SEMINARIO_E_DEMO.md`](docs/ROTEIRO_SEMINARIO_E_DEMO.md) como roteiro de apresentação.
+5. Consulte os CSVs brutos em [`dados/csv/`](dados/csv/), os resultados computacionais em [`resultados/tabelas/`](resultados/tabelas/) e as figuras em [`resultados/figuras/`](resultados/figuras/).
+6. As capturas do circuito e dos dez ensaios estão em [`docs/evidencias/`](docs/evidencias/).
 
-O sistema utiliza dois potenciômetros: um define a referência (setpoint) e o outro determina o atraso aplicado à medição de realimentação. O Arduino calcula o controle e gera um sinal PWM que excita a planta RC.
+## Escopo e separação das contribuições
 
-```mermaid
-flowchart LR
-    RV1[Potenciômetro RV1<br/>Setpoint] --> A1[Entrada A1]
-    RV2[Potenciômetro RV2<br/>Atraso 0 a 1000 ms] --> A2[Entrada A2]
-    A0[Leitura da planta<br/>Entrada A0] --> BUF[Buffer circular<br/>Atraso por software]
-    A1 --> PI[Controlador PI]
-    A2 --> BUF
-    BUF --> PI
-    PI --> PWM[Saída PWM D9]
-    PWM --> RC[Planta RC<br/>R1 = 4,7 kΩ<br/>C1 = 100 µF]
-    RC --> A0
-    PI --> SER[Telemetria serial<br/>115200 baud]
-```
+- **Núcleo computacional EC:** funções de transferência, Nyquist/winding number, margens, Routh-Hurwitz, cálculo de polos, Lugar das Raízes, Bode, atraso exato, Padé, benchmarks, testes, validação cruzada e escalabilidade.
+- **Aplicação embarcada simulada:** firmware PI histórico e firmware PID posterior, projeto editável Proteus, CSVs e evidências visuais.
+- **Artigo científico e seminário:** entregáveis gerais do grupo, mas a redação do artigo e a apresentação não fazem parte desta contribuição técnica individual, conforme divisão de trabalho informada pelo usuário.
+- **Trilha CC:** a aplicação visual interativa indicada no enunciado é específica da trilha de Ciência da Computação e não está incluída na entrega EC.
 
-![Esquema do circuito e configuração inicial dos ensaios](docs/evidencias/capturas/00_circuito_completo_e_tabela.png)
+## Instalação e reprodução dos resultados computacionais
 
-## Ambiente de desenvolvimento
-
-| Item | Configuração |
-|---|---|
-| Simulador de circuitos | Proteus 8 Professional — Release 8.13 SP0 (Build 31525) |
-| Microcontrolador simulado | Arduino Uno R3 — ATmega328P |
-| Clock do microcontrolador | 16 MHz |
-| Linguagem do firmware | C++ (Arduino) |
-| Ambiente de compilação | Arduino IDE |
-| Comunicação serial | 115200 baud, 8 bits, sem paridade, 1 stop bit |
-| Análise dos registros | Python 3 |
-
-## Circuito eletrônico
-
-A planta utilizada no protótipo é um circuito RC de primeira ordem.
-
-| Componente | Valor / função |
-|---|---|
-| ARD1 | Arduino Uno R3 / ATmega328P |
-| RV1 | Potenciômetro de 10 kΩ — ajuste do setpoint |
-| RV2 | Potenciômetro de 10 kΩ — ajuste do atraso |
-| R1 | Resistor de 4,7 kΩ |
-| C1 | Capacitor eletrolítico de 100 µF |
-| XSC1 | Osciloscópio virtual de quatro canais |
-| XVT1 | Virtual Terminal para telemetria serial |
-
-A constante de tempo nominal da planta é:
-
-\[
-\tau = R C = 4.700 \times 100\,\mu F = 0,47\,s
-\]
-
-### Ligações principais
-
-| Origem | Destino | Descrição |
-|---|---|---|
-| Arduino D9 | R1 (4,7 kΩ) | Saída PWM do controlador |
-| R1 | PLANT_OUT | Nó de saída da planta RC |
-| PLANT_OUT | Arduino A0 | Medição da saída da planta |
-| PLANT_OUT | C1 positivo | Capacitor da planta |
-| C1 negativo | GND | Referência comum |
-| RV1 — cursor | Arduino A1 | Referência do controlador |
-| RV2 — cursor | Arduino A2 | Ajuste do atraso |
-| Arduino D1/TX | Virtual Terminal RXD | Transmissão serial |
-| Osciloscópio — canal A | Arduino D9 | Visualização do PWM |
-| Osciloscópio — canal B | PLANT_OUT | Visualização da resposta RC |
-
-As extremidades dos dois potenciômetros são conectadas a +5 V e GND. Todos os pontos de GND devem compartilhar a mesma referência.
-
-## Firmware de controle
-
-O código-fonte está em [`firmware/PID_Nyquist_Proteus_Arduino.ino`](firmware/PID_Nyquist_Proteus_Arduino.ino).
-
-Embora a estrutura do firmware permita a inclusão do termo derivativo, os ensaios documentados utilizaram **Kd = 0**. Portanto, a configuração experimental registrada é um **controlador PI**.
-
-| Parâmetro | Valor utilizado |
-|---|---:|
-| Ganho proporcional (Kp) | 1,40 |
-| Ganho integral (Ki) | 1,00 |
-| Ganho derivativo (Kd) | 0,00 |
-| Período nominal de amostragem | 10 ms |
-| Atraso configurável | 0 a 1000 ms |
-| Resolução nominal do atraso | 10 ms |
-| Tamanho do buffer circular | 101 posições |
-| Saída de controle | PWM de 8 bits (0 a 255), pino D9 |
-| Anti-windup | Integração condicional |
-
-### Funcionamento do atraso
-
-A leitura atual da planta, obtida em A0, é armazenada em um buffer circular. A posição de leitura é escolhida de acordo com o atraso solicitado pelo potenciômetro RV2. O valor recuperado do buffer é utilizado como realimentação pelo controlador.
-
-Assim, o protótipo representa um **atraso variável de medição implementado em software**. Não há uma rede física ou um canal de comunicação externo inserindo o atraso.
-
-### Telemetria serial
-
-O Arduino transmite uma linha CSV por amostragem, com o seguinte cabeçalho:
-
-```text
-tempo_ms,setpoint_V,saida_V,saida_atrasada_V,pwm,atraso_ms
-```
-
-As colunas representam, respectivamente, o tempo decorrido, a referência em volts, a saída atual da planta, a saída utilizada na realimentação atrasada, o valor PWM e o atraso efetivamente aplicado.
-
-## Como abrir e executar a simulação
-
-1. Abra `proteus/AED.pdsprj` no Proteus 8.13 Professional.
-2. Abra `firmware/PID_Nyquist_Proteus_Arduino.ino` na Arduino IDE.
-3. Selecione **Arduino Uno** como placa e compile o firmware.
-4. Exporte o arquivo HEX gerado pela compilação.
-5. Nas propriedades do Arduino no Proteus, selecione o HEX em **Program File** e confirme o clock de 16 MHz.
-6. Configure o Virtual Terminal para 115200 baud, 8-N-1.
-7. Inicie a simulação e ajuste RV1 para a referência desejada e RV2 para o atraso do ensaio.
-8. Observe D9 e PLANT_OUT no osciloscópio e registre a telemetria recebida no terminal.
-
-O arquivo [`firmware/PID_Nyquist_Proteus_Arduino.hex`](firmware/PID_Nyquist_Proteus_Arduino.hex) acompanha o projeto como binário fornecido para a simulação. Sua estrutura Intel HEX e os checksums dos registros foram verificados. Essa verificação não comprova, isoladamente, que o binário foi gerado a partir da versão do `.ino` presente neste repositório. Para uma reprodução controlada, compile o código-fonte e utilize o HEX produzido por essa compilação.
-
-## Ensaios documentados
-
-Os registros disponibilizados contêm dez configurações de atraso, mantendo RV1 aproximadamente em 50%:
-
-| Ensaio | RV2 | Atraso registrado |
-|---:|---:|---:|
-| 1 | 0% | 0 ms |
-| 2 | 10% | 100 ms |
-| 3 | 20% | 200 ms |
-| 4 | 40% | 400 ms |
-| 5 | 60% | 600 ms |
-| 6 | 80% | 800 ms |
-| 7 | 88% | 880 ms |
-| 8 | 90% | 900 ms |
-| 9 | 87% | 870 ms |
-| 10 | 89% | 890 ms |
-
-Os arquivos CSV individuais estão em [`dados/csv/`](dados/csv/). O resumo estatístico está em [`dados/resumo_ensaios.csv`](dados/resumo_ensaios.csv). O documento [`docs/evidencias/Evidencias_Proteus_10_ensaios.pdf`](docs/evidencias/Evidencias_Proteus_10_ensaios.pdf) reúne o esquema, as capturas do Proteus e os registros de telemetria. As capturas PNG individuais estão em `docs/evidencias/capturas/`.
-
-### Interpretação dos registros
-
-Nas janelas registradas, os ensaios com atrasos de 0, 100, 200 e 400 ms mostram a saída aproximando-se da referência. Com o aumento do atraso, as respostas passam a apresentar oscilações mais pronunciadas. Nos ensaios de maior atraso também há ocorrências de saturação do PWM.
-
-Cada registro disponível cobre aproximadamente 9,4 a 10,0 segundos. Por isso, os dados atuais devem ser tratados como resultados exploratórios da simulação: não permitem, isoladamente, afirmar o atraso crítico experimental nem classificar definitivamente 880 ms ou 900 ms como estável ou instável. A saturação do PWM também deve ser considerada ao comparar a resposta não linear observada com a previsão obtida por um modelo linear.
-
-## Análise dos dados
-
-O script [`scripts/plotar_telemetria.py`](scripts/plotar_telemetria.py) lê os dez CSVs, atualiza o resumo estatístico e gera gráficos de resposta temporal e PWM na pasta `figuras/`.
-
-O script [`scripts/validar_entrega.py`](scripts/validar_entrega.py) verifica a presença dos arquivos principais, os cabeçalhos e atrasos dos CSVs, os registros e checksums do HEX e a estrutura interna do projeto Proteus. Essa validação é estrutural; ela não compila o firmware nem executa a simulação.
-
-Para instalar a dependência de geração dos gráficos e executar os scripts:
+Requer Python 3.10 ou superior.
 
 ```bash
+python -m venv .venv
+# Windows PowerShell: .venv\\Scripts\\Activate.ps1
+# Linux/macOS: source .venv/bin/activate
+python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-python scripts/validar_entrega.py
-python scripts/plotar_telemetria.py
 ```
 
-## Organização do repositório
+Executar a suíte automatizada:
+
+```bash
+PYTHONPATH=src python -m pytest -q
+```
+
+Regenerar tabelas e figuras (inclui leitura dos dez CSVs já extraídos):
+
+```bash
+PYTHONPATH=src python scripts/gerar_resultados.py
+```
+
+Extrair novamente as linhas completas do PDF original de evidências:
+
+```bash
+python scripts/extrair_telemetria_pdf.py /caminho/para/aed.pdf
+```
+
+Executar a auditoria estrutural do pacote:
+
+```bash
+python scripts/validar_entrega.py
+```
+
+A extração só conserva linhas CSV completas. Linhas cortadas nas bordas das páginas não são preenchidas por estimativa.
+
+## Núcleo computacional
+
+Código em [`src/nyquist_toolkit/`](src/nyquist_toolkit/):
+
+| Módulo | Responsabilidade |
+|---|---|
+| `models.py` | Modelo LIT racional, polos/zeros, avaliação de denominador de malha fechada sem atraso |
+| `frequency.py` | Resposta em frequência, Bode, cruzamentos, margens e margem de atraso |
+| `nyquist.py` | Contorno do semiplano direito, mapeamento e winding number com convenção de sinais documentada |
+| `routh.py` | Tabela de Routh-Hurwitz, primeira coluna nula, linha nula e identificação de polos no eixo imaginário |
+| `root_locus.py` | Varredura de ganho e associação numérica dos ramos do Lugar das Raízes |
+| `delay.py` | Resposta com atraso puro exato e aproximação racional de Padé de ordem configurável |
+| `benchmarks.py` | Definições explícitas dos quatro benchmarks A-D |
+
+As implementações não usam a toolbox `python-control`. SciPy/NumPy são usados como referências numéricas e para operações matemáticas auxiliares.
+
+### Convenção do critério de Nyquist
+
+O código calcula o winding number anti-horário `W_CCW` do mapeamento em torno de `-1+j0`. Para seguir a convenção do enunciado, define `N = -W_CCW`, ou seja, `N` é positivo para envoltórios horários. A relação é `Z = P + N`, em que `P` é o número de polos de malha aberta no semiplano direito e `Z` o número de polos instáveis de malha fechada. A documentação e os CSVs mantêm essa convenção explícita.
+
+### Benchmarks
+
+| Sistema | Propriedade | Modelo de malha aberta | Ganho K |
+|---|---|---|---:|
+| A | Estável, 3ª ordem | `1/(s³ + 6s² + 11s + 6)` | 1 |
+| B | Um polo no semiplano direito | `1/(s² + s - 2)` | 3 |
+| C | Zero no semiplano direito | `(s - 1)/(s² + 3s + 2)` | 1 |
+| D | Atraso puro | `e^(-0.35s)/(0.5s + 1)` | 2 |
+
+Os modelos e ganhos foram escolhidos para contemplar os cenários exigidos e obter exemplos comparáveis. Eles são benchmarks computacionais documentados, não identificações experimentais da planta do Arduino.
+
+## Resultados computacionais
+
+- [`resultados/tabelas/benchmark_resumo.csv`](resultados/tabelas/benchmark_resumo.csv): `P`, winding, `N`, `Z`, Routh/Padé e margens para A-D.
+- [`resultados/tabelas/validacao_cruzada_scipy.csv`](resultados/tabelas/validacao_cruzada_scipy.csv): comparação da resposta em frequência e contagem de polos com SciPy.
+- [`resultados/tabelas/escalabilidade_n5_n10_n20.csv`](resultados/tabelas/escalabilidade_n5_n10_n20.csv): tempo mediano de 25 execuções e erros para ordens 5, 10 e 20.
+- [`resultados/tabelas/margens_teoricas_PI_PID.csv`](resultados/tabelas/margens_teoricas_PI_PID.csv): margem de atraso teórica dos modelos PI/PID para a planta RC nominal.
+- [`resultados/tabelas/erro_atraso_exato_vs_pade.csv`](resultados/tabelas/erro_atraso_exato_vs_pade.csv): erros de fase/magnitude de Padé 1, 3 e 5 frente ao atraso exato.
+- Tabelas de Routh, dados numéricos de Bode e pontos do Lugar das Raízes também estão em `resultados/tabelas/`.
+- Figuras de Nyquist, Bode, Lugar das Raízes, atraso exato/Padé, escalabilidade e telemetria estão em `resultados/figuras/`.
+
+Os tempos de escalabilidade dependem do hardware/ambiente e são informativos, não constantes universais. O caso de ordem 20 evidencia erro máximo de aproximadamente 0,123 na recuperação dos polos geradores, apesar de resíduo polinomial normalizado baixo; isso ilustra sensibilidade/condicionamento de raízes em alta ordem e deve ser discutido, não escondido.
+
+## Aplicação simulada Arduino/Proteus
+
+### Firmwares separados
+
+| Versão | Arquivo | Kp | Ki | Kd | Uso correto |
+|---|---|---:|---:|---:|---|
+| PI histórico | [`firmware/PI_Nyquist_Proteus_Arduino.ino`](firmware/PI_Nyquist_Proteus_Arduino.ino) | 1,40 | 1,00 | 0,00 | Firmware que já estava no Git; preservado e renomeado para não confundir PI com PID |
+| PID posterior | [`firmware/PID_Nyquist_Proteus_Arduino_PID.ino`](firmware/PID_Nyquist_Proteus_Arduino_PID.ino) | 1,40 | 1,00 | 0,08 | Firmware PID fornecido posteriormente pelo usuário |
+
+O HEX fornecido junto com o firmware PID está em [`firmware/PID_Nyquist_Proteus_Arduino_PID.ino.hex`](firmware/PID_Nyquist_Proteus_Arduino_PID.ino.hex). Seus 339 registros Intel HEX e checksums foram validados estruturalmente. Não há confirmação bit a bit de que tenha sido compilado do `.ino` atual, pois o toolchain AVR/Arduino não está disponível neste ambiente. O hash e os limites da validação estão em [`firmware/LEIA-ME_HEX.md`](firmware/LEIA-ME_HEX.md).
+
+### Circuito
+
+Projeto editável: [`proteus/AED.pdsprj`](proteus/AED.pdsprj). A configuração documentada usa Arduino Uno R3/ATmega328P a 16 MHz, R1 de 4,7 kΩ, C1 de 100 µF (`τ=RC=0,47 s`), PWM em D9, leitura da planta em A0, setpoint em A1, ajuste do atraso em A2, buffer circular e telemetria serial a 115200 baud.
+
+O caminho de HEX no projeto foi alterado para caminho relativo `../firmware/PID_Nyquist_Proteus_Arduino_PID.ino.hex`. A estrutura do arquivo Proteus foi verificada; abrir/executar no Proteus não foi possível neste ambiente.
+
+### Evidências e telemetria
+
+- Dez CSVs individuais em `dados/csv/`, totalizando **9.534 amostras completas** extraídas do PDF fornecido.
+- [`dados/resumo_ensaios.csv`](dados/resumo_ensaios.csv) contém estatísticas regeneráveis.
+- [`docs/evidencias/capturas/`](docs/evidencias/capturas/) contém as imagens individuais do circuito e dos dez ensaios; o índice registra as páginas originais.
+
+A tabela inicial da evidência lista oito atrasos, mas o próprio PDF contém séries completas também para 870 ms e 890 ms. A consolidação mantém os dez valores: 0, 100, 200, 400, 600, 800, 870, 880, 890 e 900 ms. A última linha visível da série de 890 ms está cortada; a linha parcial não foi incluída nem reconstruída.
+
+A malha foi configurada nominalmente para 10 ms, porém os timestamps extraídos incluem intervalos de 10 e 11 ms. A telemetria também mostra PWM saturado a partir de 600 ms e aumento da fração saturada em 800-900 ms. Essas janelas não comprovam experimentalmente o atraso crítico.
+
+## Organização
 
 ```text
 .
-├── firmware/
-│   ├── PID_Nyquist_Proteus_Arduino.ino
-│   ├── PID_Nyquist_Proteus_Arduino.hex
-│   └── LEIA-ME_HEX.md
-├── proteus/
-│   └── AED.pdsprj
+├── .github/workflows/tests.yml
 ├── dados/
-│   ├── csv/
-│   │   ├── ensaio_000ms.csv
-│   │   ├── ensaio_100ms.csv
-│   │   ├── ...
-│   │   └── ensaio_900ms.csv
+│   ├── csv/                         # dez séries brutas, linhas completas
 │   └── resumo_ensaios.csv
-├── figuras/
-│   ├── respostas_temporais_10_ensaios.png
-│   └── pwm_10_ensaios.png
-├── scripts/
-│   ├── plotar_telemetria.py
-│   └── validar_entrega.py
-└── docs/
-    ├── Repasse_Tecnico_Para_Artigo.pdf
-    ├── Repasse_Tecnico_Para_Artigo.docx
-    ├── Enunciado_Projeto_Pesquisa.pdf
-    └── evidencias/
-        ├── Evidencias_Proteus_10_ensaios.pdf
-        └── capturas/
+├── docs/
+│   ├── Enunciado_Projeto_Pesquisa.pdf
+│   ├── GUIA_PARA_AUTOR_RELATORIO.md
+│   ├── MATRIZ_ATENDIMENTO_ENUNCIADO.md
+│   ├── RELATORIO_TECNICO_REPASSE.md
+│   └── evidencias/                  # índice e capturas visuais
+├── firmware/                        # PI, PID, HEX e nota de integridade
+├── proteus/AED.pdsprj
+├── resultados/
+│   ├── figuras/
+│   └── tabelas/
+├── scripts/                         # extracao, geracao, validacao e graficos
+├── src/nyquist_toolkit/              # algoritmos
+└── tests/                            # testes unitarios e regressao
 ```
 
-## Relação com o projeto de pesquisa
+## Limites que devem permanecer explícitos no artigo
 
-O projeto de pesquisa mais amplo propõe o estudo e a comparação do Critério de Nyquist com Routh-Hurwitz, Lugar das Raízes e Diagrama de Bode, além da avaliação de sistemas de benchmark. Este repositório concentra-se na **implementação prática da trilha de Engenharia da Computação**: firmware, planta RC simulada, atraso variável na realimentação e coleta de resultados.
+1. Os resultados da aplicação EC são exclusivamente de simulação no Proteus.
+2. Atraso é introduzido por software no histórico de A0, não por uma rede externa.
+3. Os CSVs foram extraídos do PDF de evidências; não há logs originais brutos independentes anexados.
+4. A linha final cortada da série 890 ms foi descartada.
+5. A margem de atraso PI/PID apresentada é teórica, para modelo linear contínuo RC nominal; não é medição Proteus.
+6. O HEX foi validado como Intel HEX, mas a correspondência binária com o `.ino` não foi recompilada/verificada.
+7. As simulações em janelas de aproximadamente 9,4-10,0 s, com saturação de PWM para atrasos altos, não permitem alegar uma medição definitiva do atraso crítico.
 
-A implementação dos algoritmos gerais de Nyquist, Routh-Hurwitz, Lugar das Raízes, Bode e dos benchmarks A–D pertence ao núcleo computacional mais amplo do projeto e não é realizada pelo firmware Arduino aqui documentado.
+## Referências de entrada
 
-## Documentação complementar
-
-- [Relatório de repasse técnico — PDF](docs/Repasse_Tecnico_Para_Artigo.pdf)
-- [Relatório de repasse técnico — DOCX](docs/Repasse_Tecnico_Para_Artigo.docx)
-- [Enunciado do projeto de pesquisa](docs/Enunciado_Projeto_Pesquisa.pdf)
-- [Evidências completas dos ensaios](docs/evidencias/Evidencias_Proteus_10_ensaios.pdf)
-- [Orientações para publicação no GitHub](docs/COMO_SUBIR_GITHUB.md)
-
-## Repositório
-
-[github.com/Guilheme-collab/AED---NILSON](https://github.com/Guilheme-collab/AED---NILSON)
+O enunciado original fornecido está preservado em [`docs/Enunciado_Projeto_Pesquisa.pdf`](docs/Enunciado_Projeto_Pesquisa.pdf). A evidência completa de 348 páginas foi a fonte de extração dos CSVs e das capturas selecionadas; o PDF visual do repositório é uma seleção de telas e não substitui a fonte de 348 páginas.
